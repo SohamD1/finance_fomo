@@ -3,5 +3,30 @@
 @tailwind utilities;
 
 body {
-  @apply bg-gray-950 text-white min-h-screen antialiased;
+  @apply bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-white min-h-screen antialiased;
+}
+
+/* Custom scrollbar */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom animations */
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }

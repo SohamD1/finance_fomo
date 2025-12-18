@@ -32,6 +32,9 @@ class FomoController < ApplicationController
     profit = (current_value - amount).round(2)
     percent_gain = ((current_price - historical_price) / historical_price * 100).round(2)
 
+    # 4. Get price history for chart
+    chart_data = MarketDataService.get_price_history(ticker, date_string)
+
     render json: {
       ticker: ticker,
       purchase_date: date_string,
@@ -41,7 +44,8 @@ class FomoController < ApplicationController
       invested: amount.round(2),
       current_value: current_value,
       profit: profit,
-      percent_gain: percent_gain
+      percent_gain: percent_gain,
+      chart_data: chart_data
     }
   end
 end

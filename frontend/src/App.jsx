@@ -1,197 +1,122 @@
-import { useState, useMemo } from 'react';
-import Navigation from './components/Navigation';
-import InvestmentCard from './components/InvestmentCard';
-import { mockInvestments } from './data/mockInvestments';
+import { useState } from 'react';
+import StockChart from './components/StockChart';
+import InvestmentPanel from './components/InvestmentPanel';
+import NewsSection from './components/NewsSection';
+
+const API_URL = 'http://localhost:3000/api/calculate';
 
 function App() {
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [selectedFilter, setSelectedFilter] = useState('Trending');
-  const [sortBy, setSortBy] = useState('name');
-  const [sortOrder, setSortOrder] = useState('asc');
+  const [ticker, setTicker] = useState('');
+  const [date, setDate] = useState('');
+  const [amount, setAmount] = useState('');
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  // Map investment types to categories for filtering
-  const investmentTypeToCategory = {
-    Stock: 'Stocks',
-    ETF: 'Stocks',
-    Crypto: 'Crypto',
-    Bond: 'Fixed Income',
-    'Bond ETF': 'Fixed Income',
-    'Mutual Fund': 'Mutual Funds',
-  };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!ticker || !date || !amount) return;
 
-  // Filter investments based on selected category
-  const filteredInvestments = useMemo(() => {
-    if (!mockInvestments || mockInvestments.length === 0) {
-      return [];
-    }
-    let filtered = mockInvestments;
+    setLoading(true);
+    setError(null);
 
-    // Filter by category
-    if (selectedCategory !== 'All') {
-      filtered = filtered.filter((investment) => {
-        const category = investmentTypeToCategory[investment.type] || 'Other';
-        return category === selectedCategory;
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticker, date, amount: parseFloat(amount) }),
       });
-    }
 
-    // Filter by type (Trending, Popular, etc.)
-    if (selectedFilter === 'Top Gainers') {
-      filtered = filtered.filter((inv) => inv.changePercent > 0);
-    } else if (selectedFilter === 'Top Losers') {
-      filtered = filtered.filter((inv) => inv.changePercent < 0);
-    } else if (selectedFilter === 'Popular') {
-      // Sort by volume for popular
-      filtered = [...filtered].sort((a, b) => (b.volume || 0) - (a.volume || 0));
-    }
+      const data = await response.json();
 
-    // Sort investments
-    const sorted = [...filtered].sort((a, b) => {
-      let comparison = 0;
-
-      switch (sortBy) {
-        case 'name':
-          comparison = a.name.localeCompare(b.name);
-          break;
-        case 'price':
-          comparison = a.currentPrice - b.currentPrice;
-          break;
-        case 'change':
-          comparison = a.changePercent - b.changePercent;
-          break;
-        case 'marketCap':
-          comparison = (a.marketCap || 0) - (b.marketCap || 0);
-          break;
-        case 'volume':
-          comparison = (a.volume || 0) - (b.volume || 0);
-          break;
-        default:
-          comparison = 0;
+      if (!response.ok) {
+        throw new Error(data.error || 'Something went wrong');
       }
 
-      return sortOrder === 'asc' ? comparison : -comparison;
-    });
-
-    return sorted;
-  }, [selectedCategory, selectedFilter, sortBy, sortOrder]);
-
-  const handleSort = (newSortBy) => {
-    if (sortBy === newSortBy) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortBy(newSortBy);
-      setSortOrder('asc');
+      setResult(data);
+    } catch (err) {
+      setError(err.message);
+      setResult(null);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getSortIcon = (column) => {
-    if (sortBy !== column) {
-      return (
-        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-        </svg>
-      );
-    }
-    return sortOrder === 'asc' ? (
-      <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-      </svg>
-    ) : (
-      <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-      </svg>
-    );
-  };
+  const isProfit = result?.profit > 0;
+  const today = new Date().toISOString().split('T')[0];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <Navigation
-        selectedCategory={selectedCategory}
-        onCategoryChange={setSelectedCategory}
-        selectedFilter={selectedFilter}
-        onFilterChange={setSelectedFilter}
-      />
+    <div className="min-h-screen bg-[#0d1117] text-white">
+      {/* Header */}
+      <header className="border-b border-gray-800 px-6 py-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg" />
+            <h1 className="text-xl font-bold">FOMO Calculator</h1>
+          </div>
+          <p className="text-gray-500 text-sm">What if you had invested?</p>
+        </div>
+      </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Page Header */}
-        <div className="mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                Investment Dashboard
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400">
-                {selectedCategory === 'All'
-                  ? 'All investments'
-                  : `${selectedCategory}`} • {filteredInvestments.length} {filteredInvestments.length === 1 ? 'investment' : 'investments'}
-              </p>
+      <main className="max-w-7xl mx-auto px-6 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Side - Chart Area */}
+          <div className="lg:col-span-2 space-y-4">
+            {/* Stock Header */}
+            <div className="bg-[#161b22] rounded-xl p-6 border border-gray-800">
+              {result ? (
+                <div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="text-gray-400 text-sm uppercase tracking-wider">
+                      {result.ticker}
+                    </span>
+                  </div>
+                  <div className="flex items-baseline gap-3">
+                    <span className="text-4xl font-bold">${result.current_price}</span>
+                    <span className={`text-lg font-semibold ${isProfit ? 'text-green-400' : 'text-red-400'}`}>
+                      {isProfit ? '▲' : '▼'} {Math.abs(result.percent_gain)}%
+                    </span>
+                  </div>
+                  <p className="text-gray-500 text-sm mt-1">
+                    Since {result.purchase_date} (was ${result.historical_price})
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-gray-400">Enter a stock ticker and date to see your FOMO</p>
+                  <p className="text-2xl font-bold text-gray-600 mt-2">---</p>
+                </div>
+              )}
             </div>
 
-            {/* Sort Controls */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm text-gray-600 dark:text-gray-400">Sort by:</span>
-              <div className="flex gap-1">
-                {['name', 'price', 'change', 'marketCap', 'volume'].map((column) => (
-                  <button
-                    key={column}
-                    onClick={() => handleSort(column)}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-1 ${
-                      sortBy === column
-                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                    }`}
-                  >
-                    {column.charAt(0).toUpperCase() + column.slice(1)}
-                    {getSortIcon(column)}
-                  </button>
-                ))}
-              </div>
+            {/* Price Chart */}
+            <div className="bg-[#161b22] rounded-xl p-6 border border-gray-800">
+              <StockChart data={result?.chart_data || []} isProfit={isProfit} />
             </div>
+          </div>
+
+          {/* Right Side - Investment Panel & News */}
+          <div className="space-y-4">
+            {/* Investment Calculator */}
+            <InvestmentPanel
+              ticker={ticker}
+              setTicker={setTicker}
+              date={date}
+              setDate={setDate}
+              amount={amount}
+              setAmount={setAmount}
+              onSubmit={handleSubmit}
+              loading={loading}
+              result={result}
+              error={error}
+              maxDate={today}
+            />
+
+            {/* News Section */}
+            <NewsSection ticker={result?.ticker} />
           </div>
         </div>
-
-        {/* Investment Grid */}
-        {filteredInvestments.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredInvestments.map((investment) => (
-              <InvestmentCard key={investment.id} investment={investment} />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-20">
-            <p className="text-gray-600 dark:text-gray-500 text-lg">
-              No investments found for the selected filters. Try selecting a different category or filter.
-            </p>
-          </div>
-        )}
       </main>
-
-      {/* Footer */}
-      <footer className="mt-16 border-t border-gray-200 dark:border-gray-800 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-center text-sm text-gray-600 dark:text-gray-500">
-            <div className="mb-4 md:mb-0">
-              <p>© 2025 Finance FOMO</p>
-            </div>
-            <div className="flex flex-wrap gap-6 justify-center">
-              <span className="hover:text-gray-700 dark:hover:text-gray-400 transition-colors cursor-pointer">
-                Privacy Policy
-              </span>
-              <span className="hover:text-gray-700 dark:hover:text-gray-400 transition-colors cursor-pointer">
-                Terms of Service
-              </span>
-              <span className="hover:text-gray-700 dark:hover:text-gray-400 transition-colors cursor-pointer">
-                Help Center
-              </span>
-            </div>
-          </div>
-          <div className="mt-6 text-xs text-gray-500 dark:text-gray-600 text-center">
-            <p>
-              Market data is for informational purposes only. Past performance does not guarantee future results.
-              This is not financial advice.
-            </p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

@@ -44,6 +44,52 @@ class MarketDataService
     end
   end
 
+  # Get price history from start_date to today (for chart)
+  def self.get_price_history(ticker, start_date_string)
+    start_time = Time.parse(start_date_string).to_i
+    end_time = Time.now.to_i
+
+    options = {
+      query: {
+        period1: start_time,
+        period2: end_time,
+        interval: '1d'
+      },
+      headers: {
+        "User-Agent" => "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"
+      }
+    }
+
+    response = get("/#{ticker}", options)
+
+    unless response.success?
+      puts "❌ API Error (history): #{response.code}"
+      return []
+    end
+
+    begin
+      result = response.parsed_response['chart']['result'][0]
+      timestamps = result['timestamp'] || []
+      prices = result['indicators']['adjclose'][0]['adjclose'] || []
+
+      # Combine timestamps and prices into chart data
+      chart_data = timestamps.zip(prices).map do |timestamp, price|
+        next if price.nil?
+        {
+          date: Time.at(timestamp).strftime('%b %d'),
+          price: price.round(2),
+          timestamp: timestamp
+        }
+      end.compact
+
+      puts "✅ Found #{chart_data.length} price points for #{ticker}"
+      return chart_data
+    rescue => e
+      puts "⚠️ Data Parsing Error (history): #{e.message}"
+      return []
+    end
+  end
+
   def self.current_price(ticker)
     # For current price, look backwards from today (not forward)
     now = Time.now.to_i

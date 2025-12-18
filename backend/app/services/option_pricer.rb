@@ -32,11 +32,10 @@ class OptionPricer
     [current_price - strike_price, 0].max.round(2)
   end
 
-  # Calculate how many contracts you could buy with a given amount
-  # Option premium is the cost per share, contracts are 100 shares each
-  def self.contracts_purchasable(amount:, premium_per_share:)
+  # Calculate how many shares worth of options you could buy
+  # For FOMO purposes, we allow fractional to make it work with any amount
+  def self.shares_purchasable(amount:, premium_per_share:)
     return 0 if premium_per_share <= 0
-    cost_per_contract = premium_per_share * 100
-    (amount / cost_per_contract).floor
+    (amount / premium_per_share).round(2)
   end
 end

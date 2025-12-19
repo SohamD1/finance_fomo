@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import CountUp from 'react-countup';
 import confetti from 'canvas-confetti';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 export default function InvestmentPanel({
   ticker,
@@ -19,7 +21,6 @@ export default function InvestmentPanel({
 
   useEffect(() => {
     if (isProfit && result) {
-      // Fire confetti!
       confetti({
         particleCount: 100,
         spread: 70,
@@ -30,6 +31,22 @@ export default function InvestmentPanel({
   }, [result, isProfit]);
 
   const quickAmounts = [100, 500, 1000, 5000];
+
+  // Convert string date to Date object for DatePicker
+  const selectedDate = date ? new Date(date + 'T00:00:00') : null;
+  const maxDateObj = maxDate ? new Date(maxDate + 'T00:00:00') : new Date();
+
+  const handleDateChange = (dateObj) => {
+    if (dateObj) {
+      // Convert Date object back to YYYY-MM-DD string
+      const year = dateObj.getFullYear();
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const day = String(dateObj.getDate()).padStart(2, '0');
+      setDate(`${year}-${month}-${day}`);
+    } else {
+      setDate('');
+    }
+  };
 
   return (
     <div className="bg-[#161b22] rounded-xl border border-gray-800 overflow-hidden">
@@ -53,15 +70,22 @@ export default function InvestmentPanel({
           />
         </div>
 
-        {/* Date Input */}
+        {/* Date Input - Custom DatePicker */}
         <div>
           <label className="block text-sm text-gray-400 mb-1.5">Purchase Date</label>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            max={maxDate}
-            className="w-full px-3 py-2.5 bg-[#0d1117] border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500 transition-colors"
+          <DatePicker
+            selected={selectedDate}
+            onChange={handleDateChange}
+            maxDate={maxDateObj}
+            minDate={new Date('2000-01-01')}
+            dateFormat="MMM d, yyyy"
+            placeholderText="Select a date"
+            showMonthDropdown
+            showYearDropdown
+            dropdownMode="select"
+            calendarClassName="fomo-calendar"
+            className="w-full px-3 py-2.5 bg-[#0d1117] border border-gray-700 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 transition-colors cursor-pointer"
+            wrapperClassName="w-full"
             required
           />
         </div>

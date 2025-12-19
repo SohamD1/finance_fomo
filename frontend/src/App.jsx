@@ -2,6 +2,7 @@ import { useState } from 'react';
 import StockChart from './components/StockChart';
 import InvestmentPanel from './components/InvestmentPanel';
 import NewsSection from './components/NewsSection';
+import StockStats from './components/StockStats';
 
 const API_URL = 'http://localhost:3000/api/calculate';
 
@@ -46,19 +47,8 @@ function App() {
   const today = new Date().toISOString().split('T')[0];
 
   return (
-    <div className="min-h-screen bg-[#0d1117] text-white">
-      {/* Header */}
-      <header className="border-b border-gray-800 px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg" />
-            <h1 className="text-xl font-bold">FOMO Calculator</h1>
-          </div>
-          <p className="text-gray-500 text-sm">What if you had invested?</p>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-6 py-6">
+    <div className="min-h-screen bg-[#0d1117] text-white p-6">
+      <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Side - Chart Area */}
           <div className="lg:col-span-2 space-y-4">
@@ -93,6 +83,9 @@ function App() {
             <div className="bg-[#161b22] rounded-xl p-6 border border-gray-800">
               <StockChart data={result?.chart_data || []} isProfit={isProfit} />
             </div>
+
+            {/* Stock Stats - Bottom Left */}
+            <StockStats result={result} />
           </div>
 
           {/* Right Side - Investment Panel & News */}
@@ -116,7 +109,7 @@ function App() {
             <NewsSection ticker={result?.ticker} />
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

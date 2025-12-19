@@ -2,6 +2,9 @@
 
 A web app that shows how much money you would have made if you'd invested in a stock at a specific date.
 
+
+<img width="1312" height="1035" alt="Screenshot 2025-12-19 115228" src="https://github.com/user-attachments/assets/075df85c-51ea-41d2-a530-c6bab3e812b8" />
+
 ![Stack](https://img.shields.io/badge/Rails-API-red) ![Stack](https://img.shields.io/badge/React-Vite-blue) ![Stack](https://img.shields.io/badge/Tailwind-CSS-teal)
 
 ## Stack
